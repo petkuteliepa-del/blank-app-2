@@ -29,12 +29,11 @@ def load_models():
     return species_clf, organ_clf, meta, clip_model, preprocess, device
 
 
-@st.cache_data(show_spinner=False)
-def embed_image(_clip_model, preprocess, device, image_bytes):
+def embed_image(clip_model, preprocess, device, image_bytes):
     img = Image.open(image_bytes).convert("RGB")
     x = preprocess(img).unsqueeze(0).to(device)
     with torch.no_grad():
-        f = _clip_model.encode_image(x)
+        f = clip_model.encode_image(x)
     return torch.nn.functional.normalize(f.float(), dim=-1).cpu().numpy()
 
 
