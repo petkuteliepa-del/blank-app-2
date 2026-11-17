@@ -756,7 +756,7 @@ col_logo, col_title = st.columns([0.6, 9.4])
 with col_logo:
     logo_path = APP_DIR / "logo.png"
     if logo_path.exists():
-        st.image(str(logo_path), width=80)
+        st.image(str(logo_path), width=200)
 with col_title:
     st.markdown(
         f"<h1 style='margin-bottom:0.2rem;'>{t['title']}</h1>",
