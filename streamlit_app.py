@@ -181,7 +181,7 @@ t = TEXTS[lang]
 logo_b64 = ""
 if LOGO_PATH.exists():
     try:
-        if LOGO_PATH.stat().st_size < 200_000:
+        if LOGO_PATH.stat().st_size < 500_000:
             with Image.open(LOGO_PATH) as _im:
                 _im.verify()
             logo_b64 = base64.b64encode(LOGO_PATH.read_bytes()).decode()
@@ -192,7 +192,9 @@ cursor_css = ""
 if logo_b64:
     cursor_css = (
         "html, body, .stApp, .stMarkdown, h1, h2, h3, h4, h5, h6, p, label, "
-        "[data-testid='stSidebar'] { cursor: url('data:image/png;base64,"
+        ".stButton > button, [data-testid='stSidebar'], "
+        "[data-testid='stExpander'] summary "
+        "{ cursor: url('data:image/png;base64,"
         + logo_b64 + "') 16 16, auto !important; }"
     )
 
@@ -222,8 +224,54 @@ st.markdown(
     h1 {{ font-size: 3rem !important; line-height: 1.1 !important; }}
     p, .stMarkdown, label {{ color: #2E2E2E; }}
 
-    .stButton > button, .stPopover > button,
+    /* ==== UNIFIED CONTROLS: language dropdown + 2 popovers, same shape/width/height ==== */
+    [data-testid="stPopover"],
+    [data-testid="stSelectbox"] {{
+        width: 100% !important;
+        margin: 0 !important;
+    }}
+    /* Language selector button (Selectbox) and the two popover buttons share exact styling */
+    [data-testid="stSelectbox"] > div > div {{
+        width: 100% !important;
+        min-height: 52px !important;
+        border-radius: 26px !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #C8D5BF !important;
+        padding: 0.65rem 1.1rem !important;
+        font-weight: 600 !important;
+        color: #1F3B2C !important;
+        box-sizing: border-box !important;
+    }}
+    [data-testid="stSelectbox"] label {{
+        font-weight: 600 !important;
+        color: #1F3B2C !important;
+        margin-bottom: 0.35rem !important;
+    }}
     [data-testid="stPopover"] > button {{
+        width: 100% !important;
+        min-height: 52px !important;
+        height: 52px !important;
+        border-radius: 26px !important;
+        background-color: #FFFFFF !important;
+        color: #1F3B2C !important;
+        border: 1px solid #C8D5BF !important;
+        font-weight: 600 !important;
+        padding: 0.65rem 1.1rem !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }}
+    [data-testid="stPopover"] > button:hover {{
+        background-color: #DEE7D8 !important;
+        border-color: #3E8E5A !important;
+        color: #1F3B2C !important;
+    }}
+    /* Keep popover buttons equally tall even without a visible label above them,
+       so all three line up in one column visually */
+    [data-testid="stPopover"] {{
+        padding-top: 1.65rem !important;
+    }}
+
+    .stButton > button {{
         border-radius: 26px !important;
         background-color: #3E8E5A !important;
         color: #FFFFFF !important;
@@ -232,22 +280,10 @@ st.markdown(
         padding: 0.55rem 1.1rem !important;
         transition: all 0.15s ease;
     }}
-    .stButton > button:hover, .stPopover > button:hover,
-    [data-testid="stPopover"] > button:hover {{
+    .stButton > button:hover {{
         background-color: #2F7548 !important;
         border-color: #2A6B40 !important;
         color: #FFFFFF !important;
-    }}
-
-    .stSelectbox,
-    .stSelectbox > div,
-    .stSelectbox > div > div,
-    [data-testid="stPopover"],
-    [data-testid="stPopover"] > button {{
-        width: 100% !important;
-    }}
-    [data-testid="stPopover"] > button {{
-        justify-content: center !important;
     }}
 
     [data-testid="stExpander"] details summary {{
@@ -261,12 +297,6 @@ st.markdown(
     [data-testid="stExpander"] details[open] summary {{
         background-color: #D2DECB !important;
         border-color: #3E8E5A !important;
-    }}
-    .stSelectbox > div > div {{
-        border-radius: 22px !important;
-        background-color: #FFFFFF !important;
-        border: 1px solid #C8D5BF !important;
-        padding: 0.2rem 0.7rem !important;
     }}
     [data-testid="stFileUploaderDropzone"],
     [data-testid="stFileUploader"] section {{
