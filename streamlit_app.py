@@ -21,6 +21,7 @@ except ImportError:
 APP_DIR = Path(__file__).parent
 MODEL_NAME = "hf-hub:imageomics/bioclip"
 LOGO_PATH = APP_DIR / "logo.png"
+CURSOR_PATH = APP_DIR / "cursor.png"
 
 LANG_NAMES = {"lt": "Lietuvių", "en": "English", "de": "Deutsch",
               "fr": "Français", "es": "Español", "uk": "Українська"}
@@ -178,20 +179,27 @@ TEXTS = {
 
 t = TEXTS[lang]
 
-logo_b64 = ""
-if LOGO_PATH.exists():
+# ---------- cursor from cursor.png (fallback to logo.png if missing) ----------
+def _load_cursor_b64(path):
+    if not path.exists():
+        return ""
     try:
-        if LOGO_PATH.stat().st_size < 500_000:
-            with Image.open(LOGO_PATH) as _im:
-                _im.verify()
-            logo_b64 = base64.b64encode(LOGO_PATH.read_bytes()).decode()
+        if path.stat().st_size > 500_000:
+            return ""
+        with Image.open(path) as im:
+            im.verify()
+        return base64.b64encode(path.read_bytes()).decode()
     except Exception:
-        logo_b64 = ""
+        return ""
+
+cursor_b64 = _load_cursor_b64(CURSOR_PATH)
+if not cursor_b64:
+    cursor_b64 = _load_cursor_b64(LOGO_PATH)
 
 cursor_css = ""
-if logo_b64:
+if cursor_b64:
     cursor_css = (
-        "* { cursor: url('data:image/png;base64," + logo_b64 + "') 16 16, auto !important; }"
+        "* { cursor: url('data:image/png;base64," + cursor_b64 + "') 16 16, auto !important; }"
     )
 
 st.markdown(
@@ -221,8 +229,7 @@ st.markdown(
     h1 {{ font-size: 3rem !important; line-height: 1.1 !important; }}
     p, .stMarkdown, label {{ color: #2E2E2E; }}
 
-    /* ---- make the three controls identical: width, height, shape ---- */
-    /* Language Selectbox: the wrapping div and the control box itself */
+    /* ===== Language selectbox ===== */
     div[data-testid="stSelectbox"],
     div[data-testid="stSelectbox"] > div,
     div[data-testid="stSelectbox"] div[data-baseweb="select"],
@@ -250,11 +257,19 @@ st.markdown(
         margin-bottom: 0.3rem !important;
     }}
 
-    /* Both Popovers: same 56px height, 28px radius, white fill */
+    /* ===== Popovers: one border on the button only ===== */
     div[data-testid="stPopover"] {{
         width: 100% !important;
+        margin-top: 1.4rem !important;
     }}
-    div[data-testid="stPopover"] > div:first-child,
+    div[data-testid="stPopover"] > div {{
+        width: 100% !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }}
     div[data-testid="stPopover"] button {{
         width: 100% !important;
         height: 56px !important;
@@ -269,15 +284,12 @@ st.markdown(
         align-items: center !important;
         justify-content: center !important;
         box-sizing: border-box !important;
+        box-shadow: none !important;
     }}
     div[data-testid="stPopover"] button:hover {{
         background-color: #DEE7D8 !important;
         border-color: #3E8E5A !important;
         color: #1F3B2C !important;
-    }}
-    /* Reserve the same vertical space as the selectbox label above the popovers */
-    div[data-testid="stPopover"] {{
-        margin-top: 1.4rem !important;
     }}
 
     .stButton > button {{
@@ -294,6 +306,22 @@ st.markdown(
         color: #FFFFFF !important;
     }}
 
+    /* ===== Sidebar species expanders: one border on the summary only ===== */
+    [data-testid="stExpander"] {{
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin-bottom: 0.35rem !important;
+    }}
+    [data-testid="stExpander"] details {{
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+    }}
     [data-testid="stExpander"] details summary {{
         border-radius: 20px !important;
         background-color: #DEE7D8 !important;
@@ -301,11 +329,20 @@ st.markdown(
         font-weight: 700 !important;
         border: 1px solid #C8D5BF !important;
         padding: 0.7rem 1rem !important;
+        box-shadow: none !important;
+        outline: none !important;
     }}
     [data-testid="stExpander"] details[open] summary {{
         background-color: #D2DECB !important;
         border-color: #3E8E5A !important;
     }}
+    [data-testid="stExpander"] details > div {{
+        border: none !important;
+        background: transparent !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }}
+
     [data-testid="stFileUploaderDropzone"],
     [data-testid="stFileUploader"] section {{
         min-height: 260px !important;
