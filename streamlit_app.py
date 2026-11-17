@@ -239,7 +239,6 @@ st.markdown(
         color: #FFFFFF !important;
     }}
 
-    /* Force all three controls to the same full width of their column */
     .stSelectbox,
     .stSelectbox > div,
     .stSelectbox > div > div,
@@ -383,11 +382,10 @@ with col_ctrl:
         index=cur_idx,
         key="lang_selector_ui",
         on_change=_lang_changed,
-        use_container_width=True,
     )
-    with st.popover(t["how"], use_container_width=True):
+    with st.popover(t["how"]):
         st.markdown(t["how_text"])
-    with st.popover(t["privacy"], use_container_width=True):
+    with st.popover(t["privacy"]):
         st.markdown(t["privacy_text"])
 
 st.divider()
