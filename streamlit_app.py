@@ -206,7 +206,6 @@ st.markdown(
     }}
     {cursor_css}
 
-    /* Push everything clear of the top Streamlit header */
     .block-container {{
         padding-top: 5rem !important;
         padding-bottom: 1rem !important;
@@ -239,6 +238,19 @@ st.markdown(
         border-color: #2A6B40 !important;
         color: #FFFFFF !important;
     }}
+
+    /* Force all three controls to the same full width of their column */
+    .stSelectbox,
+    .stSelectbox > div,
+    .stSelectbox > div > div,
+    [data-testid="stPopover"],
+    [data-testid="stPopover"] > button {{
+        width: 100% !important;
+    }}
+    [data-testid="stPopover"] > button {{
+        justify-content: center !important;
+    }}
+
     [data-testid="stExpander"] details summary {{
         border-radius: 20px !important;
         background-color: #DEE7D8 !important;
@@ -339,7 +351,6 @@ def _lang_changed():
         st.session_state["lang"] = new
 
 
-# ---- sidebar: species list ----
 with st.sidebar:
     st.subheader(t["species_header"])
     st.caption(t["species_hint"])
@@ -347,7 +358,6 @@ with st.sidebar:
         with st.expander(f"{sp_name(latin, lang)} ({latin})"):
             st.write(sp_desc(latin, lang))
 
-# ---- header: big logo + title on left, 3 controls stacked on right ----
 col_main, col_ctrl = st.columns([7, 3], vertical_alignment="center")
 
 with col_main:
@@ -355,7 +365,7 @@ with col_main:
         try:
             logo_img = Image.open(LOGO_PATH)
             logo_img.load()
-            st.image(logo_img, width=500)   # 5x the previous 100
+            st.image(logo_img, width=350)
         except Exception:
             pass
     st.markdown(f"<h1 style='margin:0.4rem 0 0.15rem 0;'>{t['title']}</h1>",
@@ -373,10 +383,11 @@ with col_ctrl:
         index=cur_idx,
         key="lang_selector_ui",
         on_change=_lang_changed,
+        use_container_width=True,
     )
-    with st.popover(t["how"]):
+    with st.popover(t["how"], use_container_width=True):
         st.markdown(t["how_text"])
-    with st.popover(t["privacy"]):
+    with st.popover(t["privacy"], use_container_width=True):
         st.markdown(t["privacy_text"])
 
 st.divider()
