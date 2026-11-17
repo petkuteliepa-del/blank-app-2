@@ -1,4 +1,4 @@
-# streamlit_app.py — short version, imports species data from species_descriptions.py
+# streamlit_app.py
 import base64
 import json
 from pathlib import Path
@@ -10,132 +10,24 @@ import torch
 import open_clip
 from PIL import Image
 
-from species_descriptions import SPECIES_DESCRIPTIONS, sp_name, sp_desc, sp_feature
+st.set_page_config(page_title="Lietuvos medžių identifikatorius", layout="wide")
+
+try:
+    from species_descriptions import SPECIES_DESCRIPTIONS, sp_name, sp_desc, sp_feature
+except ImportError:
+    st.error("Trūksta failo species_descriptions.py. Įkelkite jį į repozitoriją šalia streamlit_app.py.")
+    st.stop()
 
 APP_DIR = Path(__file__).parent
 MODEL_NAME = "hf-hub:imageomics/bioclip"
 LOGO_PATH = APP_DIR / "logo.png"
 
-st.set_page_config(page_title="Lietuvos medžių identifikatorius", layout="wide")
-
-logo_b64 = ""
-if LOGO_PATH.exists():
-    try:
-        with Image.open(LOGO_PATH) as _im:
-            _im.verify()
-        logo_b64 = base64.b64encode(LOGO_PATH.read_bytes()).decode()
-    except Exception:
-        logo_b64 = ""
-
-cursor_css = ""
-if logo_b64:
-    cursor_css = (
-        "html, body, .stApp, .stMarkdown, h1, h2, h3, h4, h5, h6, p, label, "
-        "[data-testid='stSidebar'] { cursor: url('data:image/png;base64,"
-        + logo_b64 + "') 16 16, auto !important; }"
-    )
-
-st.markdown(
-    f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    html, body, .stApp, .stMarkdown, .stText, .stCaption, .stSelectbox,
-    .stTabs, .stInfo, .stWarning, h1, h2, h3, h4, h5, h6, p, label, button {{
-        font-family: 'Inter', sans-serif !important;
-    }}
-    {cursor_css}
-    .stApp {{ background-color: #F4F6F1 !important; color: #2B2B2B; }}
-    .block-container {{ padding-top: 1.2rem; padding-bottom: 1rem; }}
-    [data-testid="stSidebar"] {{ background-color: #E8EDE3 !important; }}
-    h1, h2, h3, h4, h5 {{ color: #1F3B2C !important; font-weight: 700; letter-spacing: -0.015em; }}
-    h1 {{ font-size: 3rem !important; line-height: 1.1 !important; }}
-    p, .stMarkdown, label {{ color: #2E2E2E; }}
-
-    .stButton > button, .stPopover > button,
-    [data-testid="stPopover"] > button {{
-        border-radius: 26px !important;
-        background-color: #3E8E5A !important;
-        color: #FFFFFF !important;
-        border: 1px solid #347A4C !important;
-        font-weight: 600 !important;
-        padding: 0.55rem 1.1rem !important;
-        transition: all 0.15s ease;
-    }}
-    .stButton > button:hover, .stPopover > button:hover,
-    [data-testid="stPopover"] > button:hover {{
-        background-color: #2F7548 !important;
-        border-color: #2A6B40 !important;
-        color: #FFFFFF !important;
-        transform: translateY(-1px);
-    }}
-    [data-testid="stExpander"] details summary {{
-        border-radius: 20px !important;
-        background-color: #DEE7D8 !important;
-        color: #1F3B2C !important;
-        font-weight: 700 !important;
-        border: 1px solid #C8D5BF !important;
-        padding: 0.7rem 1rem !important;
-    }}
-    [data-testid="stExpander"] details[open] summary {{
-        background-color: #D2DECB !important;
-        border-color: #3E8E5A !important;
-    }}
-    .stSelectbox > div > div {{
-        border-radius: 22px !important;
-        background-color: #FFFFFF !important;
-        border: 1px solid #C8D5BF !important;
-        padding: 0.2rem 0.7rem !important;
-    }}
-    [data-testid="stFileUploaderDropzone"],
-    [data-testid="stFileUploader"] section {{
-        min-height: 260px !important;
-        border-radius: 22px !important;
-        background-color: #FFFFFF !important;
-        border: 2px dashed #3E8E5A !important;
-        padding: 2.4rem !important;
-    }}
-    [data-testid="stFileUploader"] section button {{
-        border-radius: 26px !important;
-        background-color: #3E8E5A !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        padding: 0.7rem 1.6rem !important;
-        font-weight: 600 !important;
-    }}
-    [data-testid="stCameraInput"] {{ border-radius: 22px !important; }}
-    .small-grey {{ color: #5A5A5A; font-size: 0.85rem; line-height: 1.4; }}
-    .footer-grey {{ color: #6B6B6B; font-size: 0.75rem; text-align: center;
-        padding: 2.5rem 0 1rem 0; }}
-    .feature-box {{
-        background-color: #FFFFFF; border-left: 5px solid #3E8E5A;
-        border-radius: 14px; padding: 1rem 1.25rem; margin: 1rem 0;
-        color: #2E2E2E; font-size: 0.95rem; line-height: 1.6;
-    }}
-    .feature-box .feature-label {{ font-weight: 700; color: #1F3B2C;
-        margin-bottom: 0.4rem; font-size: 0.98rem; }}
-    .alt-species {{ background-color: #EDF2E9; border-radius: 14px;
-        padding: 0.85rem 1.1rem; margin-bottom: 0.6rem; border: 1px solid #D2DECB; }}
-    .alt-species .alt-name {{ font-weight: 700; color: #1F3B2C; font-size: 1rem; }}
-    .alt-species .alt-conf {{ color: #3E8E5A; font-weight: 600; margin-left: 0.4rem; }}
-    .alt-species .alt-reason {{ color: #555; font-size: 0.88rem;
-        margin-top: 0.3rem; line-height: 1.45; }}
-    .top-pred-name {{ font-size: 2rem; font-weight: 800; color: #1F3B2C;
-        margin-bottom: 0.15rem; line-height: 1.15; }}
-    .top-pred-conf {{ font-size: 1.1rem; color: #3E8E5A; font-weight: 700;
-        margin-bottom: 0.2rem; }}
-    .top-pred-latin {{ color: #666; font-style: italic; font-size: 0.95rem;
-        margin-bottom: 0.5rem; }}
-    [data-testid="stTabs"] button[role="tab"] {{ border-radius: 14px 14px 0 0; color: #1F3B2C; }}
-    [data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{
-        background-color: #DEE7D8; border-bottom-color: #3E8E5A; }}
-    #MainMenu, footer {{ visibility: hidden; }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 LANG_NAMES = {"lt": "Lietuvių", "en": "English", "de": "Deutsch",
               "fr": "Français", "es": "Español", "uk": "Українська"}
+
+if "lang" not in st.session_state or st.session_state["lang"] not in LANG_NAMES:
+    st.session_state["lang"] = "lt"
+lang = st.session_state["lang"]
 
 TEXTS = {
     "lt": {
@@ -284,6 +176,136 @@ TEXTS = {
     },
 }
 
+t = TEXTS[lang]
+
+logo_b64 = ""
+if LOGO_PATH.exists():
+    try:
+        if LOGO_PATH.stat().st_size < 200_000:
+            with Image.open(LOGO_PATH) as _im:
+                _im.verify()
+            logo_b64 = base64.b64encode(LOGO_PATH.read_bytes()).decode()
+    except Exception:
+        logo_b64 = ""
+
+cursor_css = ""
+if logo_b64:
+    cursor_css = (
+        "html, body, .stApp, .stMarkdown, h1, h2, h3, h4, h5, h6, p, label, "
+        "[data-testid='stSidebar'] { cursor: url('data:image/png;base64,"
+        + logo_b64 + "') 16 16, auto !important; }"
+    )
+
+st.markdown(
+    f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    html, body, .stApp, .stMarkdown, .stText, .stCaption, .stSelectbox,
+    .stTabs, .stInfo, .stWarning, h1, h2, h3, h4, h5, h6, p, label, button {{
+        font-family: 'Inter', sans-serif !important;
+    }}
+    {cursor_css}
+
+    /* Push everything clear of the top Streamlit header */
+    .block-container {{
+        padding-top: 5rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }}
+    [data-testid="stHeader"] {{ background-color: transparent !important; }}
+    [data-testid="stToolbar"] {{ display: none !important; }}
+    [data-testid="stDecoration"] {{ display: none !important; }}
+
+    .stApp {{ background-color: #F4F6F1 !important; color: #2B2B2B; }}
+    [data-testid="stSidebar"] {{ background-color: #E8EDE3 !important; }}
+    h1, h2, h3, h4, h5 {{ color: #1F3B2C !important; font-weight: 700; letter-spacing: -0.015em; }}
+    h1 {{ font-size: 3rem !important; line-height: 1.1 !important; }}
+    p, .stMarkdown, label {{ color: #2E2E2E; }}
+
+    .stButton > button, .stPopover > button,
+    [data-testid="stPopover"] > button {{
+        border-radius: 26px !important;
+        background-color: #3E8E5A !important;
+        color: #FFFFFF !important;
+        border: 1px solid #347A4C !important;
+        font-weight: 600 !important;
+        padding: 0.55rem 1.1rem !important;
+        transition: all 0.15s ease;
+    }}
+    .stButton > button:hover, .stPopover > button:hover,
+    [data-testid="stPopover"] > button:hover {{
+        background-color: #2F7548 !important;
+        border-color: #2A6B40 !important;
+        color: #FFFFFF !important;
+    }}
+    [data-testid="stExpander"] details summary {{
+        border-radius: 20px !important;
+        background-color: #DEE7D8 !important;
+        color: #1F3B2C !important;
+        font-weight: 700 !important;
+        border: 1px solid #C8D5BF !important;
+        padding: 0.7rem 1rem !important;
+    }}
+    [data-testid="stExpander"] details[open] summary {{
+        background-color: #D2DECB !important;
+        border-color: #3E8E5A !important;
+    }}
+    .stSelectbox > div > div {{
+        border-radius: 22px !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #C8D5BF !important;
+        padding: 0.2rem 0.7rem !important;
+    }}
+    [data-testid="stFileUploaderDropzone"],
+    [data-testid="stFileUploader"] section {{
+        min-height: 260px !important;
+        border-radius: 22px !important;
+        background-color: #FFFFFF !important;
+        border: 2px dashed #3E8E5A !important;
+        padding: 2.4rem !important;
+    }}
+    [data-testid="stFileUploader"] section button {{
+        border-radius: 26px !important;
+        background-color: #3E8E5A !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        padding: 0.7rem 1.6rem !important;
+        font-weight: 600 !important;
+    }}
+    [data-testid="stCameraInput"] {{ border-radius: 22px !important; }}
+    .small-grey {{ color: #5A5A5A; font-size: 0.85rem; line-height: 1.4; }}
+    .footer-grey {{ color: #6B6B6B; font-size: 0.75rem; text-align: center;
+        padding: 2.5rem 0 1rem 0; }}
+    .feature-box {{
+        background-color: #FFFFFF; border-left: 5px solid #3E8E5A;
+        border-radius: 14px; padding: 1rem 1.25rem; margin: 1rem 0;
+        color: #2E2E2E; font-size: 0.95rem; line-height: 1.6;
+    }}
+    .feature-box .feature-label {{ font-weight: 700; color: #1F3B2C;
+        margin-bottom: 0.4rem; font-size: 0.98rem; }}
+    .alt-species {{ background-color: #EDF2E9; border-radius: 14px;
+        padding: 0.85rem 1.1rem; margin-bottom: 0.6rem; border: 1px solid #D2DECB; }}
+    .alt-species .alt-name {{ font-weight: 700; color: #1F3B2C; font-size: 1rem; }}
+    .alt-species .alt-conf {{ color: #3E8E5A; font-weight: 600; margin-left: 0.4rem; }}
+    .alt-species .alt-reason {{ color: #555; font-size: 0.88rem;
+        margin-top: 0.3rem; line-height: 1.45; }}
+    .top-pred-name {{ font-size: 2rem; font-weight: 800; color: #1F3B2C;
+        margin-bottom: 0.15rem; line-height: 1.15; }}
+    .top-pred-conf {{ font-size: 1.1rem; color: #3E8E5A; font-weight: 700;
+        margin-bottom: 0.2rem; }}
+    .top-pred-latin {{ color: #666; font-style: italic; font-size: 0.95rem;
+        margin-bottom: 0.5rem; }}
+    [data-testid="stTabs"] button[role="tab"] {{ border-radius: 14px 14px 0 0; color: #1F3B2C; }}
+    [data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{
+        background-color: #DEE7D8; border-bottom-color: #3E8E5A; }}
+    #MainMenu, footer {{ visibility: hidden; }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 @st.cache_resource(show_spinner="Loading models...")
 def load_models():
     species_clf = joblib.load(APP_DIR / "species_clf.joblib")
@@ -303,15 +325,21 @@ def embed_image(clip_model, preprocess, device, image_source):
     return torch.nn.functional.normalize(f.float(), dim=-1).cpu().numpy()
 
 
-with st.sidebar:
+try:
     species_clf, meta, clip_model, preprocess, device = load_models()
     classes = meta["classes"]
+except Exception as e:
+    st.error(f"Nepavyko įkelti modelio: {e}")
+    st.stop()
 
-if "lang" not in st.session_state:
-    st.session_state["lang"] = "lt"
-lang = st.session_state["lang"]
-t = TEXTS[lang]
 
+def _lang_changed():
+    new = st.session_state.get("lang_selector_ui")
+    if new in LANG_NAMES:
+        st.session_state["lang"] = new
+
+
+# ---- sidebar: species list ----
 with st.sidebar:
     st.subheader(t["species_header"])
     st.caption(t["species_hint"])
@@ -319,41 +347,37 @@ with st.sidebar:
         with st.expander(f"{sp_name(latin, lang)} ({latin})"):
             st.write(sp_desc(latin, lang))
 
-col_title, col_ctrl = st.columns([7, 3])
-with col_title:
-    tl, tx = st.columns([1, 11])
-    with tl:
-        if LOGO_PATH.exists():
-            try:
-                logo_img = Image.open(LOGO_PATH)
-                logo_img.load()
-                st.image(logo_img, width=100)
-            except Exception:
-                pass
-    with tx:
-        st.markdown(f"<h1 style='margin:0 0 0.15rem 0;'>{t['title']}</h1>",
-                    unsafe_allow_html=True)
-        st.markdown(f"<div class='small-grey'>{t['subtitle']}</div>",
-                    unsafe_allow_html=True)
+# ---- header: big logo + title on left, 3 controls stacked on right ----
+col_main, col_ctrl = st.columns([7, 3], vertical_alignment="center")
+
+with col_main:
+    if LOGO_PATH.exists():
+        try:
+            logo_img = Image.open(LOGO_PATH)
+            logo_img.load()
+            st.image(logo_img, width=500)   # 5x the previous 100
+        except Exception:
+            pass
+    st.markdown(f"<h1 style='margin:0.4rem 0 0.15rem 0;'>{t['title']}</h1>",
+                unsafe_allow_html=True)
+    st.markdown(f"<div class='small-grey'>{t['subtitle']}</div>",
+                unsafe_allow_html=True)
 
 with col_ctrl:
-    c_lang, c_how, c_priv = st.columns([1.1, 1, 1])
-    with c_lang:
-        chosen = st.selectbox(
-            t["lang_label"], options=list(LANG_NAMES.keys()),
-            format_func=lambda k: LANG_NAMES[k],
-            index=list(LANG_NAMES.keys()).index(lang),
-            key="lang_selector_ui",
-        )
-        if chosen != lang:
-            st.session_state["lang"] = chosen
-            st.rerun()
-    with c_how:
-        with st.popover(t["how"]):
-            st.markdown(t["how_text"])
-    with c_priv:
-        with st.popover(t["privacy"]):
-            st.markdown(t["privacy_text"])
+    langs = list(LANG_NAMES.keys())
+    cur_idx = langs.index(lang) if lang in langs else 0
+    st.selectbox(
+        t["lang_label"],
+        options=langs,
+        format_func=lambda k: LANG_NAMES[k],
+        index=cur_idx,
+        key="lang_selector_ui",
+        on_change=_lang_changed,
+    )
+    with st.popover(t["how"]):
+        st.markdown(t["how_text"])
+    with st.popover(t["privacy"]):
+        st.markdown(t["privacy_text"])
 
 st.divider()
 
