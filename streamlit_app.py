@@ -191,19 +191,16 @@ if LOGO_PATH.exists():
 cursor_css = ""
 if logo_b64:
     cursor_css = (
-        "html, body, .stApp, .stMarkdown, h1, h2, h3, h4, h5, h6, p, label, "
-        ".stButton > button, [data-testid='stSidebar'], "
-        "[data-testid='stExpander'] summary "
-        "{ cursor: url('data:image/png;base64,"
-        + logo_b64 + "') 16 16, auto !important; }"
+        "* { cursor: url('data:image/png;base64," + logo_b64 + "') 16 16, auto !important; }"
     )
 
 st.markdown(
     f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    html, body, .stApp, .stMarkdown, .stText, .stCaption, .stSelectbox,
-    .stTabs, .stInfo, .stWarning, h1, h2, h3, h4, h5, h6, p, label, button {{
+    html, body, .stApp, .stMarkdown, .stText, .stCaption,
+    .stTabs, .stInfo, .stWarning, h1, h2, h3, h4, h5, h6, p, label, button,
+    input, div[role="button"] {{
         font-family: 'Inter', sans-serif !important;
     }}
     {cursor_css}
@@ -224,51 +221,63 @@ st.markdown(
     h1 {{ font-size: 3rem !important; line-height: 1.1 !important; }}
     p, .stMarkdown, label {{ color: #2E2E2E; }}
 
-    /* ==== UNIFIED CONTROLS: language dropdown + 2 popovers, same shape/width/height ==== */
-    [data-testid="stPopover"],
-    [data-testid="stSelectbox"] {{
+    /* ---- make the three controls identical: width, height, shape ---- */
+    /* Language Selectbox: the wrapping div and the control box itself */
+    div[data-testid="stSelectbox"],
+    div[data-testid="stSelectbox"] > div,
+    div[data-testid="stSelectbox"] div[data-baseweb="select"],
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {{
         width: 100% !important;
-        margin: 0 !important;
-    }}
-    /* Language selector button (Selectbox) and the two popover buttons share exact styling */
-    [data-testid="stSelectbox"] > div > div {{
-        width: 100% !important;
-        min-height: 52px !important;
-        border-radius: 26px !important;
-        background-color: #FFFFFF !important;
-        border: 1px solid #C8D5BF !important;
-        padding: 0.65rem 1.1rem !important;
-        font-weight: 600 !important;
-        color: #1F3B2C !important;
+        min-width: 100% !important;
+        height: 56px !important;
+        min-height: 56px !important;
+        border-radius: 28px !important;
         box-sizing: border-box !important;
     }}
-    [data-testid="stSelectbox"] label {{
-        font-weight: 600 !important;
-        color: #1F3B2C !important;
-        margin-bottom: 0.35rem !important;
-    }}
-    [data-testid="stPopover"] > button {{
-        width: 100% !important;
-        min-height: 52px !important;
-        height: 52px !important;
-        border-radius: 26px !important;
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {{
         background-color: #FFFFFF !important;
-        color: #1F3B2C !important;
         border: 1px solid #C8D5BF !important;
+        padding: 0 1.15rem !important;
+        display: flex !important;
+        align-items: center !important;
         font-weight: 600 !important;
-        padding: 0.65rem 1.1rem !important;
+        color: #1F3B2C !important;
+    }}
+    div[data-testid="stSelectbox"] label {{
+        font-weight: 600 !important;
+        color: #1F3B2C !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 0.3rem !important;
+    }}
+
+    /* Both Popovers: same 56px height, 28px radius, white fill */
+    div[data-testid="stPopover"] {{
+        width: 100% !important;
+    }}
+    div[data-testid="stPopover"] > div:first-child,
+    div[data-testid="stPopover"] button {{
+        width: 100% !important;
+        height: 56px !important;
+        min-height: 56px !important;
+        border-radius: 28px !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #C8D5BF !important;
+        color: #1F3B2C !important;
+        font-weight: 600 !important;
+        padding: 0 1.15rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
         justify-content: center !important;
         box-sizing: border-box !important;
     }}
-    [data-testid="stPopover"] > button:hover {{
+    div[data-testid="stPopover"] button:hover {{
         background-color: #DEE7D8 !important;
         border-color: #3E8E5A !important;
         color: #1F3B2C !important;
     }}
-    /* Keep popover buttons equally tall even without a visible label above them,
-       so all three line up in one column visually */
-    [data-testid="stPopover"] {{
-        padding-top: 1.65rem !important;
+    /* Reserve the same vertical space as the selectbox label above the popovers */
+    div[data-testid="stPopover"] {{
+        margin-top: 1.4rem !important;
     }}
 
     .stButton > button {{
@@ -278,7 +287,6 @@ st.markdown(
         border: 1px solid #347A4C !important;
         font-weight: 600 !important;
         padding: 0.55rem 1.1rem !important;
-        transition: all 0.15s ease;
     }}
     .stButton > button:hover {{
         background-color: #2F7548 !important;
