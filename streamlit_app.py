@@ -179,7 +179,6 @@ TEXTS = {
 
 t = TEXTS[lang]
 
-# ---------- cursor from cursor.png (fallback to logo.png if missing) ----------
 def _load_cursor_b64(path):
     if not path.exists():
         return ""
@@ -229,8 +228,15 @@ st.markdown(
     h1 {{ font-size: 3rem !important; line-height: 1.1 !important; }}
     p, .stMarkdown, label {{ color: #2E2E2E; }}
 
-    /* ===== Language selectbox ===== */
+    /* ===== Unified controls (selectbox + 2 popovers) ===== */
+    /* Each control row gets a 14px bottom margin so the three are evenly spaced. */
     div[data-testid="stSelectbox"],
+    div[data-testid="stPopover"] {{
+        width: 100% !important;
+        margin: 0 0 14px 0 !important;
+    }}
+
+    /* Language selectbox */
     div[data-testid="stSelectbox"] > div,
     div[data-testid="stSelectbox"] div[data-baseweb="select"],
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {{
@@ -257,11 +263,7 @@ st.markdown(
         margin-bottom: 0.3rem !important;
     }}
 
-    /* ===== Popovers: one border on the button only ===== */
-    div[data-testid="stPopover"] {{
-        width: 100% !important;
-        margin-top: 1.4rem !important;
-    }}
+    /* Popovers: strip the wrapper, keep ONE border on the button */
     div[data-testid="stPopover"] > div {{
         width: 100% !important;
         border: none !important;
@@ -306,7 +308,7 @@ st.markdown(
         color: #FFFFFF !important;
     }}
 
-    /* ===== Sidebar species expanders: one border on the summary only ===== */
+    /* Sidebar species expanders: one border only */
     [data-testid="stExpander"] {{
         border: none !important;
         background: transparent !important;
